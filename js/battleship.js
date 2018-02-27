@@ -19,9 +19,9 @@ var model = {
     numShips: 3,
     shipsSunk: 0,
     shipLength: 3,
-    ships: [{ locations: ["06", "16", "26"], hits: ["", "", ""] },
-        { locations: ["24", "34", "44"], hits: ["", "", ""] },
-        { locations: ["10", "11", "12"], hits: ["", "", ""] },
+    ships: [{ locations: ["0", "0", "0"], hits: ["", "", ""] },
+        { locations: ["0", "0", "0"], hits: ["", "", ""] },
+        { locations: ["0", "0", "0"], hits: ["", "", ""] },
     ],
     //  向战舰开火的方法
     fire: function(guess) {
@@ -43,7 +43,6 @@ var model = {
         view.displayMessage("You miessed.")
         return false;
     },
-
     // 判断战舰是否被击落,如果整个战舰都被击中就算是被击落
     isSunk: function(ship) {
         for (var i = 0; i < this.shipLength; i++) {
@@ -52,7 +51,52 @@ var model = {
             }
         }
         return true;
+    },
+    //  创建model中ships的战舰数组
+    generateShipsLocations: function() {
+        var locations;
+        for (var i = 0; i < this.numShips; i++) {
+            do {
+                locations = this.generateShip();
+            } while (this.collision(locations));
+            this.ships[i].locations = locations;
+        }
+    },
+    //  创建一艘战舰将其放在甲板上的位置,可能与其他战舰重叠也可能不
+    generateShip: function() {
+        var direction = Math.floor(Math.random() * 2);
+        var row, col;
+        if (direction === 1) {
+            row = Math.floor(Math.random() * this.boardSize);
+            col = Math.floor(Math.random() * (this.boardSize - this.shipLength + 1));
+        } else {
+            row = Math.floor(Math.random() * (this.boardSize - this.shipLength + 1));
+            col = Math.floor(Math.random() * this.boardSize);
+        }
+        var newShipLocations = [];
+        for (var i = 0; i < this.shipLength; i++) {
+            if (direction === 1) {
+                newShipLocations.push(row + "" + (col + i));
+            } else {
+                newShipLocations.push((row + i) + "" + col);
+            }
+        }
+        return newShipLocations;
+
+    },
+    //  将一艘战舰作为参数判断其是否与其他战舰重叠
+    collision: function(locations) {
+        for (var i = 0; i < this.numShips; i++) {
+            var ship = this.ships[i];
+            for (var j = 0; j < locations.length; j++) {
+                if (ship.locations.indexOf(locations[j]) >= 0) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
+
 }
 
 var controller = {
@@ -94,6 +138,7 @@ function init() {
     fireButton.onclick = handleFireButton;
     var guessInput = document.getElementById("guessInput");
     guessInput.onkeypress = handleKeypress;
+    model.generateShipsLocations();
 }
 
 function handleFireButton() {
